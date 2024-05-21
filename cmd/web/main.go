@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -19,6 +20,13 @@ func main() {
 	*/
 	flag.Parse()
 
+	/*
+		Use log.New() to create a logger for writing information messages. This takes 3 parms:
+		destination to write logs to, a string prefix for message, and flags to indicate addl information to include.
+	*/
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
 	mux := http.NewServeMux()
 
 	// Create a file server which serves files out of the "./ui/static" dir
@@ -29,8 +37,21 @@ func main() {
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 
-	log.Printf("Starting server on %s", *addr)
-	err := http.ListenAndServe(*addr, mux)
-	log.Fatal(err)
+	/*
+		Initialize a new http server struct. 
+		Set the network address, handler, and errorLog fields. 
+		Server now uses the custom errorLog logger in the event of any problems.
+	*/
+
+	srv := &http.Server{
+		Addr: *addr,
+		ErrorLog: errorLog,
+		Handler: mux,
+	}
+
+	infoLog.Printf("Starting server on %s", *addr)
+	// err := http.ListenAndServe(*addr, mux)
+	err := srv.ListenAndServe()
+	errorLog.Fatal(err)
 }
 
