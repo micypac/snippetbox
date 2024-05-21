@@ -48,7 +48,7 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 	
 	mux.HandleFunc("/", app.home)
-	mux.HandleFunc("/snippet/view", snippetView)
+	mux.HandleFunc("/snippet/view", app.snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 
 	/*

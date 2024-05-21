@@ -9,7 +9,8 @@ import (
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		// http.NotFound(w, r)
+		app.notFound(w) // use the notFound helper method
 		return
 	}
 
@@ -21,7 +22,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		app.errorLog.Println(err.Error())
+		// app.errorLog.Println(err.Error())
+		app.serverError(w, err) // use the serverError helper method
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
@@ -29,17 +31,19 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// err = ts.Execute(w, nil)
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		app.errorLog.Println(err.Error())
+		// app.errorLog.Println(err.Error())
+		app.serverError(w, err) // use the serverError helper method
 		http.Error(w, "Internal Server Error", 500)
 	}
 
 	// w.Write([]byte("Hello from Snippetbox"))
 }
 
-func snippetView(w http.ResponseWriter, r *http.Request) {
+func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		// http.NotFound(w, r)
+		app.notFound(w) // use the notFound helper method
 		return
 	}
 
