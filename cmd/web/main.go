@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type application struct {
@@ -18,6 +21,8 @@ func main() {
 		what the flag controls. The value of the flag will be stored in the variable at runtime.
 	*/
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
+
+	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 	
 	/*
 		Call the Parse() function to parse the command-line flag.
@@ -31,6 +36,13 @@ func main() {
 	*/
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	db, err := openDB(*dsn)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	defer db.Close()
 
 	/*
 		Initialize new instance of our app struct containing the dependencies.
@@ -54,7 +66,22 @@ func main() {
 
 	infoLog.Printf("Starting server on %s", *addr)
 	// err := http.ListenAndServe(*addr, mux)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+
 }
 
