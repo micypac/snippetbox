@@ -23,31 +23,34 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
+	// for _, snippet := range snippets {
+	// 	fmt.Fprintf(w, "%+v\n", snippet)
+	// }
+
+	files := []string{
+		"./ui/html/base.tmpl.html",
+		"./ui/html/partials/nav.tmpl.html",
+		"./ui/html/pages/home.tmpl.html",
 	}
 
-	// files := []string{
-	// 	"./ui/html/base.tmpl.html",
-	// 	"./ui/html/partials/nav.tmpl.html",
-	// 	"./ui/html/pages/home.tmpl.html",
-	// }
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		// app.errorLog.Println(err.Error())
+		app.serverError(w, err) // use the serverError helper method
+		return
+	}
 
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	// app.errorLog.Println(err.Error())
-	// 	app.serverError(w, err) // use the serverError helper method
-	// 	http.Error(w, "Internal Server Error", 500)
-	// 	return
-	// }
+	/*
+		Create instance of a templateData struct holding the slice of snippets.
+	*/
+	data := &templateData{
+		Snippets: snippets,
+	}
 
-	// // err = ts.Execute(w, nil)
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// 	// app.errorLog.Println(err.Error())
-	// 	app.serverError(w, err) // use the serverError helper method
-	// 	http.Error(w, "Internal Server Error", 500)
-	// }
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		app.serverError(w, err) // use the serverError helper method
+	}
 
 	// w.Write([]byte("Hello from Snippetbox"))
 }
@@ -85,7 +88,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create instance of templateData holding snippet data.
-	data := &tempateData{
+	data := &templateData{
 		Snippet: snippet,
 	}
 
