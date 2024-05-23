@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ type application struct {
 	errorLog *log.Logger
 	infoLog *log.Logger
 	snippets *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -24,7 +26,6 @@ func main() {
 		what the flag controls. The value of the flag will be stored in the variable at runtime.
 	*/
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
-
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 	
 	/*
@@ -47,6 +48,12 @@ func main() {
 
 	defer db.Close()
 
+	// Initialize a new template cache
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	/*
 		Initialize new instance of our app struct containing the dependencies.
 	*/
@@ -54,6 +61,7 @@ func main() {
 		errorLog: errorLog,
 		infoLog: infoLog,
 		snippets: &models.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	/*
