@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"snippetbox.micypac.io/internal/models"
 )
@@ -12,6 +13,14 @@ type templateData struct {
 	CurrentYear int
 	Snippet *models.Snippet
 	Snippets []*models.Snippet
+}
+
+func humanDate(t time.Time) string {
+	return t.Format("02 Jan 2006 at 15:04")
+}
+
+var functions = template.FuncMap{
+	"humanDate": humanDate,
 }
 
 
@@ -37,8 +46,12 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		// 	page,
 		// }
 
+		// template.Funcs() need a new template set before calling ParseFiles.
+		ts:= template.New(name)
+		ts = ts.Funcs(functions)
+
 		// Parse the base template file into a template set.
-		ts, err := template.ParseFiles("./ui/html/base.tmpl.html")
+		ts, err := ts.ParseFiles("./ui/html/base.tmpl.html")
 		if err != nil {
 			return nil, err
 		}
