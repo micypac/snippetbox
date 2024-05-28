@@ -59,27 +59,6 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
 
-	// files := []string{
-	// 	"./ui/html/base.tmpl.html",
-	// 	"./ui/html/partials/nav.tmpl.html",
-	// 	"./ui/html/pages/view.tmpl.html",
-	// }
-
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
-
-	// // Create instance of templateData holding snippet data.
-	// data := &templateData{
-	// 	Snippet: snippet,
-	// }
-
-	// err = ts.ExecuteTemplate(w, "base", data)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// }
 	app.render(w, http.StatusOK, "view.tmpl.html", data)
 }
 
@@ -128,6 +107,9 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.serverError(w, err)
 		return
 	}
+
+	// Use Put() method to add key/value pair to the session data.
+	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 	
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }

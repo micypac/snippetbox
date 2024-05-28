@@ -7,9 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"snippetbox.micypac.io/internal/models"
 
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -20,6 +23,7 @@ type application struct {
 	snippets *models.SnippetModel
 	templateCache map[string]*template.Template
 	formDecoder *form.Decoder
+	sessionManager *scs.SessionManager
 }
 
 func main() {
@@ -58,6 +62,10 @@ func main() {
 
 	formDecoder := form.NewDecoder()
 
+	sessionManager := scs.New()
+	sessionManager.Store = mysqlstore.New(db)
+	sessionManager.Lifetime = 12 * time.Hour
+
 	/*
 		Initialize new instance of our app struct containing the dependencies.
 	*/
@@ -67,6 +75,7 @@ func main() {
 		snippets: &models.SnippetModel{DB: db},
 		templateCache: templateCache,
 		formDecoder: formDecoder,
+		sessionManager: sessionManager,
 	}
 
 	/*
@@ -74,7 +83,6 @@ func main() {
 		Set the network address, handler, and errorLog fields. 
 		Server now uses the custom errorLog logger in the event of any problems.
 	*/
-
 	srv := &http.Server{
 		Addr: *addr,
 		ErrorLog: errorLog,
@@ -82,10 +90,10 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)
-	// err := http.ListenAndServe(*addr, mux)
 	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 }
+
 
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
