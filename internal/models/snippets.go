@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Define a Snippet type to hold the dataa for an individual snippet.
+// Define a Snippet type to hold the data for an individual snippet.
 // The fields of the struct corresponds to the fields in our MySQL snippets table.
 type Snippet struct {
 	ID int
