@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -65,6 +66,7 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true // cookie will only be sent when HTTPS connention is used
 
 	/*
 		Initialize new instance of our app struct containing the dependencies.
@@ -79,6 +81,17 @@ func main() {
 	}
 
 	/*
+		Initialize a tls.Config struct to hold non-default tls settings
+		we want the server to use.
+	*/
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+		},
+	}
+
+	/*
 		Initialize a new http server struct. 
 		Set the network address, handler, and errorLog fields. 
 		Server now uses the custom errorLog logger in the event of any problems.
@@ -87,10 +100,14 @@ func main() {
 		Addr: *addr,
 		ErrorLog: errorLog,
 		Handler: app.routes(),
+		TLSConfig: tlsConfig,
+		IdleTimeout: time.Minute,
+		ReadTimeout: 5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }
 
