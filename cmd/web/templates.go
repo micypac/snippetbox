@@ -2,10 +2,12 @@ package main
 
 import (
 	"html/template"
+	"io/fs"
 	"path/filepath"
 	"time"
 
 	"snippetbox.micypac.io/internal/models"
+	"snippetbox.micypac.io/ui"
 )
 
 
@@ -32,11 +34,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	// Initialize new map to act as the cache
 	cache := map[string]*template.Template{}
 
-	/*
-		Use the filepath.Glob() func to get a slice of all the filepaths that match the
-		pattern "./ui/html/pages/*.tmpl". 
-	*/
-	pages, err := filepath.Glob("./ui/html/pages/*.tmpl.html")
+	pages, err := fs.Glob(ui.Files, "html/pages/*.tmpl.html")
 	if err != nil {
 		return nil, err
 	}
@@ -44,30 +42,14 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 
-		// files := []string{
-		// 	"./ui/html/base.tmpl.html",
-		// 	"./ui/html/partials/nav.tmpl.html",
-		// 	page,
-		// }
-
-		// template.Funcs() need a new template set before calling ParseFiles.
-		ts:= template.New(name)
-		ts = ts.Funcs(functions)
+		patterns := []string{
+			"html/base.tmpl.html",
+			"html/partials/*.tmpl.html",
+			page,
+		}
 
 		// Parse the base template file into a template set.
-		ts, err := ts.ParseFiles("./ui/html/base.tmpl.html")
-		if err != nil {
-			return nil, err
-		}
-
-		// Call ParseGlob() on this template set to add any partials.
-		ts, err = ts.ParseGlob("./ui/html/partials/*.tmpl.html")
-		if err != nil {
-			return nil, err
-		}
-
-		// Call ParseFiles() on this template set to add the page template.
-		ts, err = ts.ParseFiles(page)
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}
