@@ -8,14 +8,39 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"snippetbox.micypac.io/internal/models/mocks"
+
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 )
 
 // Create a newTestAppication helper that return an instance of app struct containing
 // mocked dependencies.
 func newTestApplication(t *testing.T) *application {
+	// Create instance of template cache.
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create instance for form decoder.
+	formDecoder := form.NewDecoder()
+
+	// Create session manager instance.
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
+
 	return &application{
 		errorLog: log.New(io.Discard, "", 0),
 		infoLog: log.New(io.Discard, "", 0),
+		snippets: &mocks.SnippetModel{},
+		users: &mocks.UserModel{},
+		templateCache: templateCache,
+		formDecoder: formDecoder,
+		sessionManager: sessionManager,
 	}
 }
 
