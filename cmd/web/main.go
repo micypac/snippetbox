@@ -26,6 +26,7 @@ type application struct {
 	templateCache map[string]*template.Template
 	formDecoder *form.Decoder
 	sessionManager *scs.SessionManager
+	debug bool
 }
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	// what the flag controls. The value of the flag will be stored in the variable at runtime.
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
+	debug := flag.Bool("debug", false, "Enable debug mode")
 	
 	// Call the Parse() function to parse the command-line flag.
 	// This needs to be invoked before the use of variable otherwise it will just use the default value.
@@ -72,6 +74,7 @@ func main() {
 		templateCache: templateCache,
 		formDecoder: formDecoder,
 		sessionManager: sessionManager,
+		debug: *debug,
 	}
 
 
