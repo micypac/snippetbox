@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"html"
 	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
 	"testing"
 	"time"
 
@@ -15,6 +18,21 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 )
+
+// Define a regex which captures the CSRF token value from the HTML for our user signup page.
+var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)' />`)
+
+func extractCSRFToken(t *testing.T, body string) string {
+	// Use the FindStringSubmatch method to extract the token from the html body.
+	matches := csrfTokenRX.FindStringSubmatch(body)
+
+	if len(matches) < 2 {
+			t.Fatal("no csrf token found in body")
+	}
+
+	return html.UnescapeString(string(matches[1]))
+}
+
 
 // Create a newTestAppication helper that return an instance of app struct containing
 // mocked dependencies.
@@ -82,6 +100,26 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 // given url path using the test server client, and returns the response status code, headers, & body.
 func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, string) {
 	res, err := ts.Client().Get(ts.URL + urlPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bytes.TrimSpace(body)
+
+	return res.StatusCode, res.Header, string(body)
+}
+
+
+// Create a postForm method for sending POST requests to the test server.
+// The url.Values type parameter can contain any form data that you want to send in the request body.
+func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, string) {
+	res, err := ts.Client().PostForm(ts.URL + urlPath, form)
 	if err != nil {
 		t.Fatal(err)
 	}
