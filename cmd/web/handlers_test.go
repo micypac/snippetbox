@@ -119,6 +119,41 @@ func TestSnippetView(t *testing.T) {
 	}
 }
 
+
+func TestSnippetCreate(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+
+	defer ts.Close()
+
+	t.Run("Unathenticated", func(t *testing.T) {
+		code, headers, _ := ts.get(t, "/snippet/create")
+
+		assert.Equal(t, code, http.StatusSeeOther)
+		assert.Equal(t, headers.Get("Location"), "/user/login")
+	})
+
+	t.Run("Authenticated", func(t *testing.T) {
+		// Make a GET /user/login and extract the CSRF token.
+		_, _, body := ts.get(t, "/user/login")
+		csrfToken := extractCSRFToken(t, body)
+
+		// Make a POST /user/login using the extracted csrf token
+		// and mock user model credentials.
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "pa$$word")
+		form.Add("csrf_token", csrfToken)
+		ts.postForm(t, "/user/login", form)
+
+		// Check that the authenticated user is shown the create snippet page
+		code, _, body := ts.get(t, "/snippet/create")
+
+		assert.Equal(t, code, http.StatusOK)
+		assert.StringContains(t, body, `<form action="/snippet/create" method="POST">`)
+	})
+}
+
 func TestUserSignup(t *testing.T) {
 	// Create the app struct containing the mocked dependencies and 
 	// set up the test server for running e2e test.

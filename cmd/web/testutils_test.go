@@ -20,7 +20,7 @@ import (
 )
 
 // Define a regex which captures the CSRF token value from the HTML for our user signup page.
-var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)' />`)
+var csrfTokenRX = regexp.MustCompile(`<input type="hidden" name="csrf_token" value="(.+)" />`)
 
 func extractCSRFToken(t *testing.T, body string) string {
 	// Use the FindStringSubmatch method to extract the token from the html body.
