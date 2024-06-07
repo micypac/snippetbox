@@ -50,6 +50,9 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 func (app *application) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !app.isAuthenticated(r) {
+			// Store URL visited in session
+			app.sessionManager.Put(r.Context(), "urlVisited", r.URL.Path)
+
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}

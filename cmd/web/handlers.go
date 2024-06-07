@@ -232,6 +232,16 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
+	urlVisited := app.sessionManager.PopString(r.Context(), "urlVisited")
+
+	fmt.Println(urlVisited)
+	
+	if urlVisited != "" {
+		// app.sessionManager.Remove(r.Context(), "urlVisited")
+		http.Redirect(w, r, urlVisited, http.StatusSeeOther)
+		return
+	}
+
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
 
